@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PalmCafe · white & grey checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f7fa;               /* light grey background */
+  --surface:#ffffff;           /* white card */
+  --border:rgba(0,0,0,0.06);
+  --green:#10b981;             /* kept subtle, but can be grey-ish */
+  --green-dim:rgba(0,0,0,0.02);
+  --green-glow:rgba(0,0,0,0.05);
+  --text:#1e1e2f;              /* dark grey text */
+  --muted:#7e8493;             /* muted grey */
+  --red:#f43f5e;
+  --btn-dark:#2d3a4f;          /* dark grey for button */
+  --btn-dark-hover:#1e293b;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;overflow:hidden}
+
+/* subtle grey gradient instead of particle canvas */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 50%, rgba(0,0,0,0.02) 0%, transparent 100%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.page{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+
+/* store header – grey/white */
+.store-header{text-align:center;margin-bottom:48px;animation:fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both}
+.store-logo{
+  width:80px;height:80px;border-radius:22px;
+  background:linear-gradient(135deg,#e2e8f0, #cbd5e1); /* grey gradient */
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;margin:0 auto 20px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.02);
+  color: #1e293b;
+}
+.store-logo i { font-size: 36px; color: #1e293b; }
+.store-name{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;margin-bottom:6px;color:var(--text)}
+.store-sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+
+/* card – white */
+.card{
+  width:100%;max-width:420px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:40px 36px;
+  animation:fadeUp 0.8s 0.15s cubic-bezier(0.16,1,0.3,1) both;
+  box-shadow:0 20px 40px -12px rgba(0,0,0,0.08);
+}
+
+.order-line{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
+.order-line:last-child{border-bottom:none}
+.order-line .label{color:var(--muted)}
+.order-line .val{color:var(--text);font-weight:500}
+.order-line.total .label{color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.order-line.total .val{color:var(--text);font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+/* pay button – dark grey / white */
+.pay-btn{
+  width:100%;height:62px;border:none;border-radius:16px;
+  background:var(--btn-dark);
+  color:#ffffff;
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
+  letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform 0.15s,box-shadow 0.15s, background 0.2s;
+  box-shadow:0 6px 20px rgba(0,0,0,0.08);
+  margin-top:24px;
+}
+.pay-btn:hover:not(:disabled){background:var(--btn-dark-hover);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,0.12)}
+.pay-btn:active:not(:disabled){transform:translateY(0)}
+.pay-btn:disabled{opacity:0.5;cursor:not-allowed}
+.pay-btn.paid{background:#1e293b;box-shadow:0 6px 20px rgba(0,0,0,0.1)}  /* success state still dark */
+.pay-btn.waiting{background:#9aa4b8;box-shadow:none;color:#ffffff;}
+
+.btn-inner{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1}
+.palm-icon{font-size:20px; color: white; }
+.palm-icon i { font-size: 20px; color: white; }
+
+/* status bar – light grey */
+.status-bar{
+  margin-top:16px;padding:12px 16px;border-radius:12px;
+  font-size:12px;letter-spacing:0.5px;
+  display:none;align-items:center;gap:10px;
+  animation:fadeUp 0.3s ease both;
+  background: #f0f2f5;
+  border: 1px solid #e2e8f0;
+  color: var(--muted);
+}
+.status-bar.show{display:flex}
+.status-bar.waiting{background:#f0f2f5;border-color:#e2e8f0;color:#64748b;}
+.status-bar.success{background:#ecfdf5;border-color:#cbd5e1;color:#1e293b;}
+.status-bar.error{background:#fef2f2;border-color:#fecaca;color:#b91c1c;}
+
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0}
+.dot.pulse{animation:pulse 1.2s ease infinite}
+
+/* spinner */
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#ffffff;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+</style>
+</head>
+<body>
+<!-- no canvas, just subtle grey gradient in body::before -->
+<div class="page">
+  <div class="store-header">
+    <div class="store-logo"><i class="fas fa-mug-saucer"></i></div>   <!-- coffee icon -->
+    <div class="store-name">PalmCafe</div>
+    <div class="store-sub">Merchant Checkout</div>
+  </div>
+
+  <div class="card">
+    <div class="order-line"><span class="label">Latte ×1</span><span class="val">$4.50</span></div>
+    <div class="order-line"><span class="label">Croissant ×2</span><span class="val">$6.00</span></div>
+    <div class="order-line"><span class="label">Tax (5%)</span><span class="val">$0.53</span></div>
+    <div class="divider"></div>
+    <div class="order-line total"><span class="label">Total</span><span class="val" id="totalDisplay">$11.03</span></div>
+
+    <button class="pay-btn" id="payBtn" onclick="triggerPay()">
+      <span class="btn-inner">
+        <span class="palm-icon" id="btnIcon"><i class="fas fa-hand-peace"></i></span>  <!-- palm icon -->
+        <span id="btnText">Pay with Palm</span>
+      </span>
+    </button>
+
+    <div class="status-bar" id="statusBar">
+      <span class="dot pulse" id="statusDot"></span>
+      <span id="statusMsg">Waiting...</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — unchanged functionality
+// ══════════════════════════════════════════
+const SUPABASE_URL  = 'https://dslrfdvexnafbdnwagvm.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzbHJmZHZleG5hZmJkbndhZ3ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzMwMjgsImV4cCI6MjA4NzY0OTAyOH0.zQBwJtheqVpYkgMQdovGJh80DMtreR82SsVKFF46dVU';
+const MERCHANT_ID   = '94711eb0-2e3f-4474-b4d2-924f017b226c';
+const USER_ID       = 'e917d2d3-6db3-49c4-8da1-8cc5f25e87f4';
+const AMOUNT        = 11.03;
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+let sub = null;
+
+// ── Pay trigger ──────────────────────────
+async function triggerPay(){
+  const btn = document.getElementById('payBtn');
+  btn.disabled = true;
+  btn.classList.add('waiting');
+  document.getElementById('btnIcon').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';  // spinner icon
+  document.getElementById('btnText').textContent = 'Sending to phone...';
+
+  showStatus('waiting','Waiting for palm confirmation on mobile...');
+
+  const { data, error } = await db.from('payment_requests').insert({
+    user_id: USER_ID,
+    merchant_id: MERCHANT_ID,
+    amount: AMOUNT,
+    status: 'pending'
+  }).select().single();
+
+  if(error){
+    showStatus('error','Failed to send request: ' + error.message);
+    resetBtn(); return;
+  }
+
+  console.log('[MERCHANT] Request created:', data.id);
+  listenForResult(data.id);
+}
+
+// ── Listen for mobile app response ───────
+function listenForResult(reqId){
+  if(sub) db.removeChannel(sub);
+  sub = db.channel('req-'+reqId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'payment_requests',filter:`id=eq.${reqId}`}, p=>{
+      const s = p.new.status;
+      console.log('[MERCHANT] Status:', s);
+      if(s==='completed'){
+        db.removeChannel(sub);
+        markPaid();
+      } else if(s==='rejected'){
+        db.removeChannel(sub);
+        showStatus('error','❌ Payment declined by user.');
+        resetBtn();
+      }
+    }).subscribe();
+}
+
+// ── UI states ────────────────────────────
+function markPaid(){
+  const btn = document.getElementById('payBtn');
+  btn.disabled = false;
+  btn.classList.remove('waiting');
+  btn.classList.add('paid');
+  document.getElementById('btnIcon').innerHTML = '<i class="fas fa-check-circle"></i>'; // check icon
+  document.getElementById('btnText').textContent = 'PAID';
+  showStatus('success','Payment confirmed! Balance deducted successfully.');
+}
+
+function resetBtn(){
+  const btn = document.getElementById('payBtn');
+  btn.disabled = false;
+  btn.classList.remove('waiting','paid');
+  document.getElementById('btnIcon').innerHTML = '<i class="fas fa-hand-peace"></i>';
+  document.getElementById('btnText').textContent = 'Pay with Palm';
+}
+
+function showStatus(type, msg){
+  const bar = document.getElementById('statusBar');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusMsg');
+  bar.className = 'status-bar show ' + type;
+  dot.className = 'dot' + (type==='waiting'?' pulse':'');
+  txt.textContent = msg;
+}
+</script>
+</body>
+</html>
